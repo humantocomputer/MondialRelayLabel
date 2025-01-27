@@ -1,0 +1,21 @@
+{
+    "name": "humantocomputer/mondial-relay-label",
+    "description": "Generate shipping label from Mondial Relay API",
+    "type": "library",
+    "require-dev": {
+        "guzzlehttp/guzzle": "^7.9"
+    },
+    "license": "MIT",
+    "autoload": {
+        "psr-4": {
+            "Humantocomputer\\MondialRelayLabel\\": "src/"
+        }
+    },
+    "authors": [
+        {
+            "name": "Yohann",
+            "email": "yohann@humantocomputer.com"
+        }
+    ],
+    "require": {}
+}
