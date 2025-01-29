@@ -45,7 +45,7 @@ $mondialRelay = new MondialRelayLabel();
 $shipmentData = [
             'OrderNo' => 'Order number (optional)',
             'CustomerNo' => 'Customer number (optional)',
-            'parcelCount' => 'Nombre de colis (optional)',
+            'ParcelCount' => 'Nombre de colis (optional)',
             'DeliveryMode__Mode' => '24R', // CCC, CDR, CDS, REL, LCC, HOM, HOC, 24R; 24L,  XOH
             'DeliveryMode__Location' => '(optional)',
             'CollectionMode__Mode' => 'CCC', // CCC, CDR, CDS, REL, LCC, HOM, HOC, 24R; 24L,  XOH
@@ -54,44 +54,46 @@ $shipmentData = [
                 'Parcel' => [
                     'Content' => 'Parcel content descirption (optional)',
                     'Weight__Value' => 'required|numeric|min:10',
-                    'Weight__Unit' => 'gr (optional)',
+                    'Weight__Unit' => 'gr', //required gr mandatory
                 ],
                 'DeliveryInstruction' => '(optional)',
-                'Sender' => [
-                    'Address' => [
-                        'Title' => 'required|string',
-                        'Firstname' => 'required|string',
-                        'Lastname' => 'required|string',
-                        'Streetname' => 'required|string',
-                        'HouseNo' => '(optional)',
-                        'CountryCode' => 'required|string',
-                        'PostCode' => 'required|string',
-                        'City' => 'required|string',
-                        'AddressAdd1' => 'required|string',
-                        'AddressAdd2' => '(optional)',
-                        'AddressAdd3' => '(optional)',
-                        'PhoneNo' => '(optional)',
-                        'MobileNo' => '(optional)',
-                        'Email' => '(optional)',
-                    ],
+            ],
+            'Sender' => [
+                'Address' => [
+                    'Title' => 'required|string',
+                    'Firstname' => 'required|string',
+                    'Lastname' => 'required|string',
+                    'Streetname' => 'required|string',
+                    'HouseNo' => '(optional)',
+                    'CountryCode' => 'required|string',
+                    'PostCode' => 'required|string',
+                    'City' => 'required|string',
+                    'AddressAdd1' => '(optional) Name. Do not fill it if Firstname/Lastname are
+filled',
+                    'AddressAdd2' => '(optional)',
+                    'AddressAdd3' => '(optional)',
+                    'PhoneNo' => '(optional)',
+                    'MobileNo' => '(optional)',
+                    'Email' => '(optional)',
                 ],
-                'Recipient' => [
-                    'Address' => [
-                        'Title' => 'required|string',
-                        'Firstname' => 'required|string',
-                        'Lastname' => 'required|string',
-                        'Streetname' => 'required|string',
-                        'HouseNo' => '(optional)',
-                        'CountryCode' => 'required|string',
-                        'PostCode' => 'required|string',
-                        'City' => 'required|string',
-                        'AddressAdd1' => 'required|string',
-                        'AddressAdd2' => '(optional)',
-                        'AddressAdd3' => '(optional)',
-                        'PhoneNo' => '(optional)',
-                        'MobileNo' => '(optional)',
-                        'Email' => '(optional)',
-                    ],
+            ],
+            'Recipient' => [
+                'Address' => [
+                    'Title' => 'required|string',
+                    'Firstname' => 'required|string',
+                    'Lastname' => 'required|string',
+                    'Streetname' => 'required|string',
+                    'HouseNo' => '(optional)',
+                    'CountryCode' => 'required|string',
+                    'PostCode' => 'required|string',
+                    'City' => 'required|string',
+                    'AddressAdd1' => '(optional) Name. Do not fill it if Firstname/Lastname are
+filled',
+                    'AddressAdd2' => '(optional)',
+                    'AddressAdd3' => '(optional)',
+                    'PhoneNo' => '(optional)',
+                    'MobileNo' => '(optional)',
+                    'Email' => '(optional)',
                 ],
             ],
         ];

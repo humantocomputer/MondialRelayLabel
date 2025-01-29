@@ -5,7 +5,8 @@
 namespace Humantocomputer\MondialRelayLabel;
 
 use Exception;
-use Illuminate\Support\Facades\Http;
+use GuzzleHttp\Client;
+use GuzzleHttp\Psr7\Response;
 use Illuminate\Support\Facades\Validator;
 use RuntimeException;
 use SimpleXMLElement;
@@ -22,7 +23,7 @@ class MondialRelayLabel
 
     public function __construct()
     {
-                // check config('mondial-relay-label.url') is set or not
+        // check config('mondial-relay-label.url') is set or not
         if (! config('mondial-relay-label.url')) {
             throw new RuntimeException('Mondial Relay API URL is not set');
         }
@@ -48,23 +49,30 @@ class MondialRelayLabel
         $this->password = config('mondial-relay-label.password');
     }
 
-    public function generateLabel($shipmentData = [])
+    public function generateLabels($shipmentData = [])
     {
         $xmlRequest = $this->buildRequest($shipmentData);
 
         // Send request to Api
         $response = $this->sendRequest($xmlRequest);
+
         // Handle response
-        return $this->handleResponse($response);
+        $xml = $this->handleResponse($response);
+
+        $urls = $this->extractUrls($xml);
+
+        return $urls;
     }
 
     private function buildRequest($shipmentData = []): string
     {
 
-        //check shipment data
+        // check shipment data
         $this->checkShipmentData($shipmentData);
 
-        $xml = new SimpleXMLElement('<ShipmentCreationRequest/>');
+        $xml = new SimpleXMLElement('<?xml version="1.0" encoding="utf-8"?><ShipmentCreationRequest xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns="http://www.example.org/Request"/>');
+
         // Ajout des informations de contexte
         $context = $xml->addChild('Context');
         $context->addChild('Login', $this->login);
@@ -83,39 +91,27 @@ class MondialRelayLabel
         $shipment = $ShipmentsList->addChild('Shipment');
 
         foreach ($shipmentData as $key => $value) {
+
             if (is_array($value)) {
-                $this->arrayToXml($shipment, $value);
+                $node = $shipment->addChild($key);
+                $this->arrayToXml($node, $value);
             } else {
-                $shipment->addChild($key, $value);
+                // if key contains __ then the second element is an attribute of the first element and value is the value of the attribute
+                if (strpos($key, '__') !== false) {
+                    $key = explode('__', $key);
+                    // check if $key[0] is already present in the xml
+                    if ($shipment->{$key[0]}) {
+                        $shipment->{$key[0]}->addAttribute($key[1], htmlspecialchars($value));
+                    } else {
+                        $shipment->addChild($key[0])->addAttribute($key[1], htmlspecialchars($value));
+                    }
+                } else {
+                    $shipment->addChild($key, htmlspecialchars($value));
+                }
             }
         }
 
         return $xml->asXML();
-    }
-
-    private function sendRequest($xmlRequest): object
-    {
-        return Http::withHeaders([
-            'Content-Type' => 'application/xml',
-            'Accept' => 'application/xml',
-        ])->post($this->url, $xmlRequest);
-    }
-
-    private function handleResponse($response): string
-    {
-        $xml = simplexml_load_string($response);
-        // Vérification des erreurs
-        if (isset($xml->Status->Code) && $xml->Status->Code != '0') {
-            throw new Exception('Erreur API Mondial Relay : '.$xml->Status->Message);
-        }
-
-        return $xml;
-        // Récupération de l'étiquette en base64
-        if (isset($xml->Shipment->Label)) {
-            return base64_decode($xml->Shipment->Label);
-        }
-
-        throw new Exception('Étiquette non disponible dans la réponse de l\'API.');
     }
 
     public function checkShipmentData($shipmentData = [])
@@ -123,7 +119,7 @@ class MondialRelayLabel
         $shipmentDataRules = [
             'OrderNo' => 'string',
             'CustomerNo' => 'string',
-            'parcelCount' => 'integer',
+            'ParcelCount' => 'required|integer',
             'DeliveryMode__Mode' => 'required|string', // CCC, CDR, CDS, REL, LCC, HOM, HOC, 24R; 24L,  XOH
             'DeliveryMode__Location' => 'string',
             'CollectionMode__Mode' => 'required|string', // CCC, CDR, CDS, REL, LCC, HOM, HOC, 24R; 24L,  XOH
@@ -132,53 +128,97 @@ class MondialRelayLabel
             'Parcels.Parcel.Weight__Value' => 'required|numeric|min:10',
             'Parcels.Parcel.Weight__Unit' => 'string',
             'Parcels.DeliveryInstruction' => 'string',
-            'Parcels.Sender.Address.Title' => 'string',
-            'Parcels.Sender.Address.Firstname' => 'required|string',
-            'Parcels.Sender.Address.Lastname' => 'required|string',
-            'Parcels.Sender.Address.Streetname' => 'required|string',
-            'Parcels.Sender.Address.HouseNo' => 'string',
-            'Parcels.Sender.Address.CountryCode' => 'required|string',
-            'Parcels.Sender.Address.PostCode' => 'required|string',
-            'Parcels.Sender.Address.City' => 'required|string',
-            'Parcels.Sender.Address.AddressAdd1' => 'required|string',
-            'Parcels.Sender.Address.AddressAdd2' => 'string',
-            'Parcels.Sender.Address.AddressAdd3' => 'string',
-            'Parcels.Sender.Address.PhoneNo' => 'string',
-            'Parcels.Sender.Address.MobileNo' => 'string',
-            'Parcels.Sender.Address.Email' => 'string',
-            'Parcels.Recipient.Address.Title' => 'string',
-            'Parcels.Recipient.Address.Firstname' => 'required|string',
-            'Parcels.Recipient.Address.Lastname' => 'required|string',
-            'Parcels.Recipient.Address.Streetname' => 'required|string',
-            'Parcels.Recipient.Address.HouseNo' => 'string',
-            'Parcels.Recipient.Address.CountryCode' => 'required|string',
-            'Parcels.Recipient.Address.PostCode' => 'required|string',
-            'Parcels.Recipient.Address.City' => 'required|string',
-            'Parcels.Recipient.Address.AddressAdd1' => 'required|string',
-            'Parcels.Recipient.Address.AddressAdd2' => 'string',
-            'Parcels.Recipient.Address.AddressAdd3' => 'string',
-            'Parcels.Recipient.Address.PhoneNo' => 'string',
-            'Parcels.Recipient.Address.MobileNo' => 'string',
-            'Parcels.Recipient.Address.Email' => 'string',
+            'Sender.Address.Title' => 'string',
+            // Sender.Address.Firstname required if Sender.Address.AddressAdd1 is not present
+            'Sender.Address.Firstname' => 'required|string',
+            'Sender.Address.Lastname' => 'required|string',
+            'Sender.Address.Streetname' => 'required|string',
+            'Sender.Address.HouseNo' => 'string',
+            'Sender.Address.CountryCode' => 'required|string',
+            'Sender.Address.PostCode' => 'required|string',
+            'Sender.Address.City' => 'required|string',
+            'Sender.Address.AddressAdd1' => 'string',
+            'Sender.Address.AddressAdd2' => 'string',
+            'Sender.Address.AddressAdd3' => 'string',
+            'Sender.Address.PhoneNo' => 'string',
+            'Sender.Address.MobileNo' => 'string',
+            'Sender.Address.Email' => 'string',
+            'Recipient.Address.Title' => 'string',
+            'Recipient.Address.Firstname' => 'required|string',
+            'Recipient.Address.Lastname' => 'required|string',
+            'Recipient.Address.Streetname' => 'required|string',
+            'Recipient.Address.HouseNo' => 'string',
+            'Recipient.Address.CountryCode' => 'required|string',
+            'Recipient.Address.PostCode' => 'required|string',
+            'Recipient.Address.City' => 'required|string',
+            'Recipient.Address.AddressAdd1' => 'string',
+            'Recipient.Address.AddressAdd2' => 'string',
+            'Recipient.Address.AddressAdd3' => 'string',
+            'Recipient.Address.PhoneNo' => 'string',
+            'Recipient.Address.MobileNo' => 'string',
+            'Recipient.Address.Email' => 'string',
         ];
 
         $validator = Validator::make($shipmentData, $shipmentDataRules);
 
         return $validator->validate();
 
-
     }
 
-    private function arrayToXml(?SimpleXMLElement $shipment, array $value)
+    private function arrayToXml(?SimpleXMLElement $node, array $value)
     {
         foreach ($value as $key => $val) {
             if (is_array($val)) {
-                $this->arrayToXml($shipment->addChild($key), $val);
+                $this->arrayToXml($node->addChild($key), $val);
             } else {
-                $shipment->addChild($key, $val);
+                if (strpos($key, '__') !== false) {
+                    $key = explode('__', $key);
+                    if ($node->{$key[0]}) {
+                        $node->{$key[0]}->addAttribute($key[1], htmlspecialchars($val));
+                    } else {
+                        $node->addChild($key[0])->addAttribute($key[1], htmlspecialchars($val));
+                    }
+                } else {
+                    $node->addChild($key, htmlspecialchars($val));
+                }
             }
         }
 
-        return $shipment;
+        return $node;
+    }
+
+    private function sendRequest($xmlRequest): object
+    {
+        return (new Client)->post($this->url, [
+            'headers' => [
+                'Content-Type' => 'application/xml',
+                'Accept' => 'application/xml',
+            ],
+            'body' => $xmlRequest,
+        ]);
+    }
+
+    private function handleResponse(Response $response): SimpleXMLElement
+    {
+        if ($response->getStatusCode() === 200) {
+            $xmlResponse = new SimpleXMLElement($response->getBody()->getContents());
+
+            return $xmlResponse;
+        }
+        throw new Exception('Error while generating label');
+    }
+
+    private function extractUrls(SimpleXMLElement $xml): array
+    {
+        try {
+            $urls = [];
+            foreach ($xml->ShipmentsList->Shipment as $shipment) {
+                $urls[] = (string) $shipment->LabelList->Label->Output;
+            }
+        } catch (Exception $e) {
+            throw new Exception('Error while extracting urls');
+        }
+
+        return $urls;
     }
 }
