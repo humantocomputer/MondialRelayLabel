@@ -2,8 +2,8 @@
     "name": "humantocomputer/mondial-relay-label",
     "description": "Generate shipping label from Mondial Relay API",
     "type": "library",
-    "require-dev": {
-        "guzzlehttp/guzzle": "^7.9"
+    "require": {
+        "php": ">=8.1"
     },
     "license": "MIT",
     "autoload": {
