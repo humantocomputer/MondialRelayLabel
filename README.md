@@ -5,7 +5,7 @@
 Pour installer le package, utilisez Composer :
 
 ```bash
-composer require humantocomputer/mondialrelaylabel
+composer require humantocomputer/mondial-relay-label
 ```
 
 ## Configuration
