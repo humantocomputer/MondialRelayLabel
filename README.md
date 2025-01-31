@@ -37,7 +37,7 @@ Remplissez les informations d'identification de Mondial Relay dans le fichier de
 Pour générer une étiquette, vous pouvez utiliser la méthode `generate` de la classe `MondialRelayLabel` :
 
 ```php
-use HumanToComputer\MondialRelayLabel\MondialRelayLabel;
+use HumanToComputer\MondialRelayLabel;
 
 // Créez une instance de MondialRelayLabel
 $mondialRelay = new MondialRelayLabel();
