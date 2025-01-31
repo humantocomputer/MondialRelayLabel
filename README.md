@@ -98,13 +98,7 @@ filled',
             ],
         ];
         
-// Générez une étiquette
-$label = $mondialRelay->generateLabel($shipmentData);
+ // Get urls of the labels
+$urls = $mondialRelay->generateLabels($shipmentData);
 
-// Affichez ou téléchargez l'étiquette
-echo $label;
-
-// Pour télécharger l'étiquette
-file_put_contents('label.pdf', $label);
-```
 
