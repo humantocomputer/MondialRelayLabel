@@ -2,7 +2,7 @@
 
 /** @noinspection NullPointerExceptionInspection */
 
-namespace Humantocomputer;
+namespace Humantocomputer\MondialRelayLabel;
 
 use Exception;
 use GuzzleHttp\Client;
