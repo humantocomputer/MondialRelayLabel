@@ -213,7 +213,8 @@ xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns="http://www.example.org/Reque
         try {
             $urls = [];
             foreach ($xml->ShipmentsList->Shipment as $shipment) {
-                $urls[] = (string) $shipment->LabelList->Label->Output;
+                $shipmentNumber = (string) $shipment['ShipmentNumber'];
+                $urls[$shipmentNumber] = (string) $shipment->LabelList->Label->Output;
             }
         } catch (Exception $e) {
             throw new Exception('Error while extracting urls');
